@@ -1,17 +1,17 @@
 library(shiny)
 library(shinydashboard)
 library(readr)
+library(shinyjs)
 
 source('财务管理价值观念.R')
 
-
-ui=dashboardPage(
-  title = '财务管理计算',
-  dashboardHeader(title='财管计算平台'),
+ui = dashboardPage(
+  dashboardHeader(title = 'FM Calculation'),
   dashboardSidebar(
     sidebarMenu(
-      menuItem(text = '常用系数',tabName = 'tab1'),
-      menuItem(text = '分位数表',tabName = 'tab2')
+      selectInput('lan','Language',choices = c('中文','English')),
+      menuItem(text = '常用系数 (FA coef)',tabName = 'tab1'),
+      menuItem(text = '分位数表 (Quantile)',tabName = 'tab2')
     )
   ),
   dashboardBody(
@@ -20,7 +20,8 @@ ui=dashboardPage(
         tabName = 'tab1',
         fluidRow(
           box(
-            title = '利率+年限',
+            # title = '利率+年限',
+            div(id = 'box1',strong('利率+年限'),style = "margin-bottom:10px;font-size:17px;"),
             width = 2,
             textInput('t1','利率'),
             textInput('t2','年限'),
@@ -53,8 +54,8 @@ ui=dashboardPage(
         fluidRow(
           box(
             width = 6,
-            fileInput('file1','Upload a file'),
-            textAreaInput('t3','请输入R code',height = '300px',placeholder = '上传文件解析后命名为data'),
+            fileInput('file1','请上传文件'),
+            textAreaInput('t3','请输入R code',height = '300px',placeholder = '上传文件命名为data'),
             actionButton('a2','运行')
           ),
           box(
@@ -67,32 +68,37 @@ ui=dashboardPage(
         tabName = 'tab2',
         fluidRow(
           box(
-            title = '参数',
+            # title = '参数',
+            div(id = 'box2',strong('参数'),style = "margin-bottom:10px;font-size:17px;"),
             width = 2,
-            textInput('t4','分位点'),
+            textInput('t4','概率'),
             textInput('t5','自由度1'),
             textInput('t6','自由度2'),
-            actionButton('a3','Submit')
+            actionButton('a3','提交')
           ),
-          box(
+          column(
             width = 10,
             box(
-              title = '标准正态分布',
+              # title = '标准正态分布',
+              div(id = 'box3',strong('标准正态分布'),style = "margin-bottom:10px;font-size:17px;"),
               width = 3,
               verbatimTextOutput('text6')
             ),
             box(
-              title = 'T分布',
+              # title = 'T分布',
+              div(id = 'box4',strong('T分布'),style = "margin-bottom:10px;font-size:17px;"),
               width = 3,
               verbatimTextOutput('text7')
             ),
             box(
-              title = '卡方分布',
+              # title = '卡方分布',
+              div(id = 'box5',strong('卡方分布'),style = "margin-bottom:10px;font-size:17px;"),
               width = 3,
               verbatimTextOutput('text8')
             ),
             box(
-              title = 'F分布',
+              # title = 'F分布',
+              div(id = 'box6',strong('F分布'),style = "margin-bottom:10px;font-size:17px;"),
               width = 3,
               verbatimTextOutput('text9')
             )
@@ -101,8 +107,8 @@ ui=dashboardPage(
         fluidRow(
           box(
             width = 6,
-            fileInput('file2','Upload a file'),
-            textAreaInput('t7','请输入R code',height = '300px',placeholder = '上传文件解析后命名为data1'),
+            fileInput('file2','请上传文件'),
+            textAreaInput('t7','请输入R code',height = '300px',placeholder = '上传文件命名为data'),
             actionButton('a4','运行')
           ),
           box(
@@ -112,10 +118,63 @@ ui=dashboardPage(
         )
       )
     )
+  ),
+  tags$head(
+    tags$script(
+      HTML('
+        $(document).on("shiny:inputchanged", function(event) {
+          if (event.name === "lan") {
+            var language = event.value;
+            if (language === "中文") {
+              $("#t1-label").text("利率");
+              $("#t2-label").text("年限");
+              $("#a1").text("提交");
+              $("#box1").html("<b>利率+年限</b>");
+              $("#file1-label").text("请上传文件");
+              $("#t3-label").text("请输入R code");
+              $("#t3").text("上传文件命名为data");
+              $("#a2").text("运行");
+              $("#box2").html("<b>参数</b>");
+              $("#box3").html("<b>标准正态分布</b>");
+              $("#box4").html("<b>T分布</b>");
+              $("#box5").html("<b>卡方分布</b>");
+              $("#box6").html("<b>F分布</b>");
+              $("#t4-label").text("概率");
+              $("#t5-label").text("自由度1");
+              $("#t6-label").text("自由度2");
+              $("#a3").text("提交");
+              $("#file2-label").text("请上传文件");
+              $("#t7").text("上传文件命名为data");
+              $("#a4").text("运行");
+            } else {
+              $("#t1-label").text("Interest");
+              $("#t2-label").text("Years");
+              $("#a1").text("Submit");
+              $("#box1").html("<b>Interest+Years</b>");
+              $("#file1-label").text("Upload a file");
+              $("#t3-label").text("Please input R code");
+              $("#t3").text("The Uploaded file would be named as data");
+              $("#a2").text("Run");
+              $("#box2").html("<b>Parameters</b>");
+              $("#box3").html("<b>Gaussian Dist</b>");
+              $("#box4").html("<b>T Dist</b>");
+              $("#box5").html("<b>Chi-squared Dist</b>");
+              $("#box6").html("<b>F Dist</b>");
+              $("#t4-label").text("Prob");
+              $("#t5-label").text("Df1");
+              $("#t6-label").text("Df2");
+              $("#a3").text("Submit");
+              $("#file2-label").text("Upload a file");
+              $("#t7").text("The Uploaded file would be named as data");
+              $("#a4").text("Run");
+            }
+          }
+        });
+      ')
+    )
   )
 )
-
-server=function(input,output){
+server=function(input,output,session){
   
   observeEvent(
     input$a1,
@@ -247,8 +306,8 @@ server=function(input,output){
     }
   )
   
+  
 }
-
 
 shinyApp(ui,server)
 
