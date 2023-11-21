@@ -4,5 +4,6 @@
 财务管理常用系数计算结果存储在变量FVIF，PVIF，FVIFA，PVIFA中。  
 第二页可以计算常见统计分布的位数，并提供了代码运算平台。
 计算结果存储在变量qnorm，qt，qchisq，qf中。  
+第三页实现二叉树欧式期权定价  
 url: https://skywalkerchen.shinyapps.io/fmcompute/
 
