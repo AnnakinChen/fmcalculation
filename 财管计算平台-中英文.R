@@ -11,7 +11,8 @@ ui = dashboardPage(
     sidebarMenu(
       selectInput('lan','Language',choices = c('中文','English')),
       menuItem(text = '常用系数 (FA coef)',tabName = 'tab1'),
-      menuItem(text = '分位数表 (Quantile)',tabName = 'tab2')
+      menuItem(text = '分位数表 (Quantile)',tabName = 'tab2'),
+      menuItem(text = '二叉树 (Binomial Model)',tabName = 'tab3')
     )
   ),
   dashboardBody(
@@ -116,6 +117,46 @@ ui = dashboardPage(
             verbatimTextOutput('text10')
           )
         )
+      ),
+      tabItem(
+        tabName = 'tab3',
+        fluidRow(
+          box(
+            width = 5,
+            fluidRow(
+              column(
+                width = 6,
+                selectInput('c1','期权类型',choices = c('call','put')),
+                textInput('t8',label = '初始价',value = 40),
+                textInput('t9',label = '行权价',value = 40),
+                textInput('t10',label = '折现率',value = 0.04)
+              ),
+              column(
+                width = 6,
+                textInput('t11',label = '波动率',value = 0.3),
+                textInput('t12',label = '周期数',value = 2),
+                textInput('t13',label = '到期时间',value = 0.5),
+              )
+            ),
+            fluidRow(
+              column(
+                width = 12,
+                actionButton('a5','运行'),
+                align = 'center'
+              )
+            )
+            
+            # selectInput('c1','期权类型',choices = c('call','put')),
+            # textInput('t8',label = '初始价',value = 40),
+            # textInput('t9',label = '行权价',value = 40),
+            
+            
+          ),
+          box(
+            width = 7,
+            verbatimTextOutput('text11')
+          )
+        )
       )
     )
   ),
@@ -146,6 +187,14 @@ ui = dashboardPage(
               $("#file2-label").text("请上传文件");
               $("#t7").text("上传文件命名为data");
               $("#a4").text("运行");
+              $("#c1-label").text("期权类型");
+              $("#t8-label").text("初始价");
+              $("#t9-label").text("行权价");
+              $("#t10-label").text("折现率");
+              $("#t11-label").text("波动率");
+              $("#t12-label").text("周期数");
+              $("#t13-label").text("到期时间");
+              $("#a5").text("运行");
             } else {
               $("#t1-label").text("Interest");
               $("#t2-label").text("Years");
@@ -167,6 +216,14 @@ ui = dashboardPage(
               $("#file2-label").text("Upload a file");
               $("#t7").text("The Uploaded file would be named as data");
               $("#a4").text("Run");
+              $("#c1-label").text("option type");
+              $("#t8-label").text("S0");
+              $("#t9-label").text("K");
+              $("#t10-label").text("r");
+              $("#t11-label").text("sigma");
+              $("#t12-label").text("N");
+              $("#t13-label").text("T");
+              $("#a5").text("Run");
             }
           }
         });
@@ -303,6 +360,28 @@ server=function(input,output,session){
           result
         }
       })
+    }
+  )
+  observeEvent(
+    input$a5,
+    {
+      type = input$c1
+      s0 = as.numeric(input$t8)
+      k = as.numeric(input$t9)
+      r = as.numeric(input$t10)
+      sigma = as.numeric(input$t11)
+      N = as.numeric(input$t12)
+      maturity = as.numeric(input$t13)
+      if(input$lan=="中文"){
+        output$text11 = renderPrint({
+          cat('初始时刻期权定价为：',option0(s0,k,r,sigma,N,maturity,type))
+        })
+      }
+      else{
+        output$text11 = renderPrint({
+          cat('The date-0 option price is:',option0(s0,k,r,sigma,N,maturity,type))
+        })
+      }
     }
   )
   
