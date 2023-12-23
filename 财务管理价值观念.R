@@ -101,3 +101,52 @@ option0 = function(s0,k,r,sigma,N,maturity,type){
   
 }
 
+fytm = function(n,pv,fv,pmt){
+  fytm1 = function(r){
+    res = 0
+    for(i in 1:n){
+      res = res+pmt/(1+r)^i
+    }
+    res = res+fv/(1+r)^n
+    return(res-pv)
+  }
+  return(nleqslv(0,fytm1,control=list(ftol = 1e-25, xtol = 1e-25))$x)
+}
+
+ffv = function(n,pv,pmt,ytm){
+  ffv1 = function(fv){
+    res = 0
+    for(i in 1:n){
+      res = res+pmt/(1+ytm)^i
+    }
+    res = res+fv/(1+ytm)^n
+    return(res-pv)
+  }
+  return(nleqslv(0,ffv1,control=list(ftol = 1e-25, xtol = 1e-25))$x)
+}
+
+fpv = function(n,fv,pmt,ytm){
+  res = 0
+  for(i in 1:n){
+    res = res+pmt/(1+ytm)^i
+  }
+  res = res+fv/(1+ytm)^n
+  return(res)
+}
+
+fpmt = function(n,pv,fv,ytm){
+  fpmt1 = function(pmt){
+    res = 0
+    for(i in 1:n){
+      res = res+pmt/(1+ytm)^i
+    }
+    res = res+fv/(1+ytm)^n
+    return(res-pv)
+  }
+  return(nleqslv(0,fpmt1,control=list(ftol = 1e-25, xtol = 1e-25))$x)
+}
+
+
+
+
+

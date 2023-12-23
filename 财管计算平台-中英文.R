@@ -2,6 +2,7 @@ library(shiny)
 library(shinydashboard)
 library(readr)
 library(shinyjs)
+library(nleqslv)
 
 source('财务管理价值观念.R')
 
@@ -12,7 +13,8 @@ ui = dashboardPage(
       selectInput('lan','Language',choices = c('中文','English')),
       menuItem(text = '常用系数 (FA coef)',tabName = 'tab1'),
       menuItem(text = '分位数表 (Quantile)',tabName = 'tab2'),
-      menuItem(text = '二叉树 (Binomial Model)',tabName = 'tab3')
+      menuItem(text = '二叉树 (Binomial Model)',tabName = 'tab3'),
+      menuItem(text = 'Financial Calculator',tabName = 'tab4')
     )
   ),
   dashboardBody(
@@ -155,6 +157,48 @@ ui = dashboardPage(
           box(
             width = 7,
             verbatimTextOutput('text11')
+          )
+        )
+      ),
+      tabItem(
+        tabName = 'tab4',
+        fluidRow(
+          box(
+            width = 5,
+            fluidRow(
+              box(
+                width = 6,
+                textInput('tb4_t1','PV'),
+                textInput('tb4_t2','FV'),
+                textInput('tb4_t3','PMT')
+              ),
+              box(
+                width = 6,
+                textInput('tb4_t4','N'),
+                textInput('tb4_t5','YTM'),
+              )
+            ),
+            fluidRow(
+              fluidRow(
+                column(
+                  width = 12,
+                  actionButton('tb4_a1','Submit'),
+                  align = 'center'
+                )
+              ),
+              p(),
+              fluidRow(
+                column(
+                  width = 12,
+                  actionButton('tb4_a2','Clear'),
+                  align = 'center'
+                )
+              )
+            )
+          ),
+          box(
+            width = 7,
+            verbatimTextOutput('tb4_p1')
           )
         )
       )
@@ -384,8 +428,65 @@ server=function(input,output,session){
       }
     }
   )
-  
-  
+  observeEvent(
+    input$tb4_a1,
+    {
+      if(input$tb4_t1==''){
+        fv = as.numeric(input$tb4_t2)
+        pmt = as.numeric(input$tb4_t3)
+        n = as.numeric(input$tb4_t4)
+        ytm = as.numeric(input$tb4_t5)
+        output$tb4_p1 = renderPrint({
+          fpv(n,fv,pmt,ytm)
+        })
+      }
+      else if(input$tb4_t2==''){
+        pv = as.numeric(input$tb4_t1)
+        pmt = as.numeric(input$tb4_t3)
+        n = as.numeric(input$tb4_t4)
+        ytm = as.numeric(input$tb4_t5)
+        output$tb4_p1 = renderPrint({
+          ffv(n,pv,pmt,ytm)
+        })
+      }
+      else if(input$tb4_t3==''){
+        pv = as.numeric(input$tb4_t1)
+        fv = as.numeric(input$tb4_t2)
+        n = as.numeric(input$tb4_t4)
+        ytm = as.numeric(input$tb4_t5)
+        output$tb4_p1 = renderPrint({
+          fpmt(n,pv,fv,ytm)
+        })
+      }
+      else if(input$tb4_t4==''){
+        output$tb4_p1 = renderPrint({
+          'Please input n'
+        })
+      }
+      else if(input$tb4_t5==''){
+        pv = as.numeric(input$tb4_t1)
+        fv = as.numeric(input$tb4_t2)
+        pmt = as.numeric(input$tb4_t3)
+        n = as.numeric(input$tb4_t4)
+        output$tb4_p1 = renderPrint({
+          fytm(n,pv,fv,pmt)
+        })
+      }
+    }
+  )
+  observeEvent(
+    input$tb4_a2,
+    {
+      updateTextInput(session,'tb4_t1',value = '')
+      updateTextInput(session,'tb4_t2',value = '')
+      updateTextInput(session,'tb4_t3',value = '')
+      updateTextInput(session,'tb4_t4',value = '')
+      updateTextInput(session,'tb4_t5',value = '')
+      output$tb4_p1 = renderPrint({
+        NULL
+      })
+    }
+  )
 }
 
 shinyApp(ui,server)
