@@ -176,6 +176,7 @@ ui = dashboardPage(
                 width = 6,
                 textInput('tb4_t4','N'),
                 textInput('tb4_t5','YTM'),
+                selectInput('tb4_c1','Type',choices = c('End','Begin'))
               )
             ),
             fluidRow(
@@ -431,46 +432,91 @@ server=function(input,output,session){
   observeEvent(
     input$tb4_a1,
     {
-      if(input$tb4_t1==''){
-        fv = as.numeric(input$tb4_t2)
-        pmt = as.numeric(input$tb4_t3)
-        n = as.numeric(input$tb4_t4)
-        ytm = as.numeric(input$tb4_t5)
-        output$tb4_p1 = renderPrint({
-          fpv(n,fv,pmt,ytm)
-        })
+      if(input$tb4_c1=='End'){
+        if(input$tb4_t1==''){
+          fv = as.numeric(input$tb4_t2)
+          pmt = as.numeric(input$tb4_t3)
+          n = as.numeric(input$tb4_t4)
+          ytm = as.numeric(input$tb4_t5)
+          output$tb4_p1 = renderPrint({
+            fpv(n,fv,pmt,ytm)
+          })
+        }
+        else if(input$tb4_t2==''){
+          pv = as.numeric(input$tb4_t1)
+          pmt = as.numeric(input$tb4_t3)
+          n = as.numeric(input$tb4_t4)
+          ytm = as.numeric(input$tb4_t5)
+          output$tb4_p1 = renderPrint({
+            ffv(n,pv,pmt,ytm)
+          })
+        }
+        else if(input$tb4_t3==''){
+          pv = as.numeric(input$tb4_t1)
+          fv = as.numeric(input$tb4_t2)
+          n = as.numeric(input$tb4_t4)
+          ytm = as.numeric(input$tb4_t5)
+          output$tb4_p1 = renderPrint({
+            fpmt(n,pv,fv,ytm)
+          })
+        }
+        else if(input$tb4_t4==''){
+          output$tb4_p1 = renderPrint({
+            'Please input n'
+          })
+        }
+        else if(input$tb4_t5==''){
+          pv = as.numeric(input$tb4_t1)
+          fv = as.numeric(input$tb4_t2)
+          pmt = as.numeric(input$tb4_t3)
+          n = as.numeric(input$tb4_t4)
+          output$tb4_p1 = renderPrint({
+            fytm(n,pv,fv,pmt)
+          })
+        }
       }
-      else if(input$tb4_t2==''){
-        pv = as.numeric(input$tb4_t1)
-        pmt = as.numeric(input$tb4_t3)
-        n = as.numeric(input$tb4_t4)
-        ytm = as.numeric(input$tb4_t5)
-        output$tb4_p1 = renderPrint({
-          ffv(n,pv,pmt,ytm)
-        })
-      }
-      else if(input$tb4_t3==''){
-        pv = as.numeric(input$tb4_t1)
-        fv = as.numeric(input$tb4_t2)
-        n = as.numeric(input$tb4_t4)
-        ytm = as.numeric(input$tb4_t5)
-        output$tb4_p1 = renderPrint({
-          fpmt(n,pv,fv,ytm)
-        })
-      }
-      else if(input$tb4_t4==''){
-        output$tb4_p1 = renderPrint({
-          'Please input n'
-        })
-      }
-      else if(input$tb4_t5==''){
-        pv = as.numeric(input$tb4_t1)
-        fv = as.numeric(input$tb4_t2)
-        pmt = as.numeric(input$tb4_t3)
-        n = as.numeric(input$tb4_t4)
-        output$tb4_p1 = renderPrint({
-          fytm(n,pv,fv,pmt)
-        })
+      else{
+        if(input$tb4_t1==''){
+          fv = as.numeric(input$tb4_t2)
+          pmt = as.numeric(input$tb4_t3)
+          n = as.numeric(input$tb4_t4)
+          ytm = as.numeric(input$tb4_t5)
+          output$tb4_p1 = renderPrint({
+            p_fpv(n,fv,pmt,ytm)
+          })
+        }
+        else if(input$tb4_t2==''){
+          pv = as.numeric(input$tb4_t1)
+          pmt = as.numeric(input$tb4_t3)
+          n = as.numeric(input$tb4_t4)
+          ytm = as.numeric(input$tb4_t5)
+          output$tb4_p1 = renderPrint({
+            p_ffv(n,pv,pmt,ytm)
+          })
+        }
+        else if(input$tb4_t3==''){
+          pv = as.numeric(input$tb4_t1)
+          fv = as.numeric(input$tb4_t2)
+          n = as.numeric(input$tb4_t4)
+          ytm = as.numeric(input$tb4_t5)
+          output$tb4_p1 = renderPrint({
+            p_fpmt(n,pv,fv,ytm)
+          })
+        }
+        else if(input$tb4_t4==''){
+          output$tb4_p1 = renderPrint({
+            'Please input n'
+          })
+        }
+        else if(input$tb4_t5==''){
+          pv = as.numeric(input$tb4_t1)
+          fv = as.numeric(input$tb4_t2)
+          pmt = as.numeric(input$tb4_t3)
+          n = as.numeric(input$tb4_t4)
+          output$tb4_p1 = renderPrint({
+            p_fytm(n,pv,fv,pmt)
+          })
+        }
       }
     }
   )
@@ -482,6 +528,7 @@ server=function(input,output,session){
       updateTextInput(session,'tb4_t3',value = '')
       updateTextInput(session,'tb4_t4',value = '')
       updateTextInput(session,'tb4_t5',value = '')
+      updateSelectInput(session,'tb4_c1',choices = c('End','Begin'),selected = 'End')
       output$tb4_p1 = renderPrint({
         NULL
       })
