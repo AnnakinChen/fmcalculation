@@ -1,3 +1,10 @@
+library(shiny)
+library(shinydashboard)
+library(readr)
+library(shinyjs)
+library(nleqslv)
+
+
 FVIF=function(i,n){
   return((1+i)^n)
 }
@@ -227,6 +234,24 @@ p_fpmt = function(n,pv,fv,ytm){
   
 }
 
+npv = function(cf,irr){
+  npv = 0
+  for(i in 1:length(cf)){
+    npv = npv+cf[i]/(1+irr)^(i-1)
+  }
+  return(npv)
+}
+
+irr = function(cf){
+  irr1 = function(irr){
+    npv = 0
+    for(i in 1:length(cf)){
+      npv = npv+cf[i]/(1+irr)^(i-1)
+    }
+    return(npv)
+  }
+  return(nleqslv(0,irr1)$x)
+}
 
 
 

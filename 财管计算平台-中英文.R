@@ -201,6 +201,42 @@ ui = dashboardPage(
             width = 7,
             verbatimTextOutput('tb4_p1')
           )
+        ),
+        fluidRow(
+          box(
+            width = 5,
+            fluidRow(
+              box(
+                width = 6,
+                textInput('tb4_t6','Cash Flows',placeholder = 'separate by comma')
+              ),
+              box(
+                width = 6,
+                textInput('tb4_t7','IRR')
+              )
+            ),
+            fluidRow(
+              fluidRow(
+                column(
+                  width = 12,
+                  actionButton('tb4_a3','Submit'),
+                  align = 'center'
+                )
+              ),
+              p(),
+              fluidRow(
+                column(
+                  width = 12,
+                  actionButton('tb4_a4','Clear'),
+                  align = 'center'
+                )
+              )
+            )
+          ),
+          box(
+            width = 7,
+            verbatimTextOutput('tb4_p2')
+          )
         )
       )
     )
@@ -534,6 +570,36 @@ server=function(input,output,session){
       })
     }
   )
+  
+  observeEvent(
+    input$tb4_a3,
+    {
+      if(input$tb4_t7==''){
+        cf = as.numeric(unlist(strsplit(input$tb4_t6,',')))
+        output$tb4_p2 = renderPrint({
+          cat('The IRR is:',irr(cf))
+        })
+      }
+      else{
+        cf = as.numeric(unlist(strsplit(input$tb4_t6,',')))
+        irr = as.numeric(input$tb4_t7)
+        output$tb4_p2 = renderPrint({
+          cat('The NPV is:',npv(cf,irr))
+        })
+      }
+    }
+  )
+  observeEvent(
+    input$tb4_a4,
+    {
+      updateTextInput(session,'tb4_t6',value = '')
+      updateTextInput(session,'tb4_t7',value = '')
+      output$tb4_p2 = renderPrint({
+        NULL
+      })
+    }
+  )
+  
 }
 
 shinyApp(ui,server)
