@@ -128,13 +128,14 @@ ui = dashboardPage(
             fluidRow(
               column(
                 width = 6,
+                selectInput('addc1','期权种类',choices = c('European','American')),
                 selectInput('c1','期权类型',choices = c('call','put')),
                 textInput('t8',label = '初始价',value = 40),
-                textInput('t9',label = '行权价',value = 40),
-                textInput('t10',label = '折现率',value = 0.04)
+                textInput('t9',label = '行权价',value = 40)
               ),
               column(
                 width = 6,
+                textInput('t10',label = '折现率',value = 0.04),
                 textInput('t11',label = '波动率',value = 0.3),
                 textInput('t12',label = '周期数',value = 2),
                 textInput('t13',label = '到期时间',value = 0.5),
@@ -269,6 +270,7 @@ ui = dashboardPage(
               $("#t7").text("上传文件命名为data");
               $("#a4").text("运行");
               $("#c1-label").text("期权类型");
+              $("#addc1-label").text("期权种类");
               $("#t8-label").text("初始价");
               $("#t9-label").text("行权价");
               $("#t10-label").text("折现率");
@@ -298,6 +300,7 @@ ui = dashboardPage(
               $("#t7").text("The Uploaded file would be named as data");
               $("#a4").text("Run");
               $("#c1-label").text("option type");
+              $("#addc1-label").text("option style");
               $("#t8-label").text("S0");
               $("#t9-label").text("K");
               $("#t10-label").text("r");
@@ -454,14 +457,28 @@ server=function(input,output,session){
       N = as.numeric(input$t12)
       maturity = as.numeric(input$t13)
       if(input$lan=="中文"){
-        output$text11 = renderPrint({
-          cat('初始时刻期权定价为：',option0(s0,k,r,sigma,N,maturity,type))
-        })
+        if(input$addc1=='European'){
+          output$text11 = renderPrint({
+            cat('初始时刻期权定价为：',option0(s0,k,r,sigma,N,maturity,type))
+          })
+        }
+        else if(input$addc1=='American'){
+          output$text11 = renderPrint({
+            cat('初始时刻期权定价为：',Aoption(s0,k,r,sigma,N,maturity,type))
+          })
+        }
       }
       else{
-        output$text11 = renderPrint({
-          cat('The date-0 option price is:',option0(s0,k,r,sigma,N,maturity,type))
-        })
+        if(input$addc1=='Europe'){
+          output$text11 = renderPrint({
+            cat('The date-0 option price is:',option0(s0,k,r,sigma,N,maturity,type))
+          })
+        }
+        else if(input$addc1=='America'){
+          output$text11 = renderPrint({
+            cat('The date-0 option price is:',Aoption(s0,k,r,sigma,N,maturity,type))
+          })
+        }
       }
     }
   )

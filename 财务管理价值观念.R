@@ -107,6 +107,46 @@ option0 = function(s0,k,r,sigma,N,maturity,type){
   return(round(V1[1,1],5))
   
 }
+# 美式期权
+AmericanS = function(s0,N,u){
+  d = 1/u
+  S = matrix(0,nrow = N+1,ncol = N+1)
+  for(i in 1:(N+1)){
+    k=1
+    for(j in 1:(N+1)){
+      S[j,i] = u^(i-k)*d^(k-1)
+      k = k+1
+      if(i<=j){
+        break
+      }
+    }
+  }
+  return(s0*S)
+}
+
+Aoption = function(s0,k,r,sigma,N,maturity,type){
+  t = maturity/N
+  u = exp(sigma*sqrt(t))
+  d = 1/u
+  q = (exp(r*t)-d)/(u-d)
+  S = AmericanS(s0,N,u)
+  phi = phi(N,q,t,r)
+  if(type=="call"){
+    payoff = ifelse(S-k>0,S-k,0)
+  }
+  else if(type=='put'){
+    payoff = ifelse(k-S>0,k-S,0)
+  }
+  V = as.matrix(payoff[,N+1])
+  for(i in 1:N){
+    V = phi%*%V
+    V = ifelse(V>payoff[,N-i+1],V,payoff[,N-i+1])
+  }
+  return(V[1,1])
+  
+}
+
+
 
 fytm = function(n,pv,fv,pmt){
   fytm1 = function(r){
