@@ -3,6 +3,9 @@ library(shinydashboard)
 library(readr)
 library(shinyjs)
 library(nleqslv)
+library(DT)
+library(tidyverse)
+library(readxl)
 
 source('财务管理价值观念.R')
 
@@ -14,7 +17,8 @@ ui = dashboardPage(
       menuItem(text = '常用系数 (FA coef)',tabName = 'tab1'),
       menuItem(text = '分位数表 (Quantile)',tabName = 'tab2'),
       menuItem(text = '二叉树 (Binomial Model)',tabName = 'tab3'),
-      menuItem(text = 'Financial Calculator',tabName = 'tab4')
+      menuItem(text = 'Financial Calculator',tabName = 'tab4'),
+      menuItem(text = '数据透视表',tabName = 'tab5')
     )
   ),
   dashboardBody(
@@ -128,14 +132,13 @@ ui = dashboardPage(
             fluidRow(
               column(
                 width = 6,
-                selectInput('addc1','期权种类',choices = c('European','American')),
                 selectInput('c1','期权类型',choices = c('call','put')),
                 textInput('t8',label = '初始价',value = 40),
-                textInput('t9',label = '行权价',value = 40)
+                textInput('t9',label = '行权价',value = 40),
+                textInput('t10',label = '折现率',value = 0.04)
               ),
               column(
                 width = 6,
-                textInput('t10',label = '折现率',value = 0.04),
                 textInput('t11',label = '波动率',value = 0.3),
                 textInput('t12',label = '周期数',value = 2),
                 textInput('t13',label = '到期时间',value = 0.5),
@@ -239,6 +242,37 @@ ui = dashboardPage(
             verbatimTextOutput('tb4_p2')
           )
         )
+      ),
+      tabItem(
+        tabName = "tab5",
+        fluidRow(
+          box(
+            width = 3,
+            fileInput("tab5_f1",label = "上传数据",accept = ".xlsx"),
+            selectInput("tab5_s1",label = "行标签",choices = NULL),
+            selectInput("tab5_s2",label = "列标签",choices = NULL),
+            selectInput("tab5_s3",label = "值",choices = NULL),
+            selectInput("tab5_s4",label = "聚合",choices = c("计数","去重计数","求和","平均","最大值","最小值")),
+            column(
+              width = 12,
+              align = "center",
+              actionButton("tab5_a1","提交")
+            )
+            
+          ),
+          box(
+            width = 9,
+            collapsible=TRUE,
+            collapsed=TRUE,
+            tableOutput("tab5_ta1")
+          )
+        ),
+        fluidRow(
+          column(
+            width = 12,
+            DTOutput("tab5_dt1")
+          )
+        )
       )
     )
   ),
@@ -270,7 +304,6 @@ ui = dashboardPage(
               $("#t7").text("上传文件命名为data");
               $("#a4").text("运行");
               $("#c1-label").text("期权类型");
-              $("#addc1-label").text("期权种类");
               $("#t8-label").text("初始价");
               $("#t9-label").text("行权价");
               $("#t10-label").text("折现率");
@@ -278,6 +311,12 @@ ui = dashboardPage(
               $("#t12-label").text("周期数");
               $("#t13-label").text("到期时间");
               $("#a5").text("运行");
+              $("#tab5_f1-label").text("上传数据");
+              $("#tab5_s1-label").text("行标签");
+              $("#tab5_s2-label").text("列标签");
+              $("#tab5_s3-label").text("值");
+              $("#tab5_s4-label").text("聚合");
+              $("#tab5_a1").text("运行");
             } else {
               $("#t1-label").text("Interest");
               $("#t2-label").text("Years");
@@ -300,7 +339,6 @@ ui = dashboardPage(
               $("#t7").text("The Uploaded file would be named as data");
               $("#a4").text("Run");
               $("#c1-label").text("option type");
-              $("#addc1-label").text("option style");
               $("#t8-label").text("S0");
               $("#t9-label").text("K");
               $("#t10-label").text("r");
@@ -308,6 +346,12 @@ ui = dashboardPage(
               $("#t12-label").text("N");
               $("#t13-label").text("T");
               $("#a5").text("Run");
+              $("#tab5_f1-label").text("Upload data");
+              $("#tab5_s1-label").text("Row");
+              $("#tab5_s2-label").text("Column");
+              $("#tab5_s3-label").text("Value");
+              $("#tab5_s4-label").text("Aggregation");
+              $("#tab5_a1").text("Run");
             }
           }
         });
@@ -457,28 +501,14 @@ server=function(input,output,session){
       N = as.numeric(input$t12)
       maturity = as.numeric(input$t13)
       if(input$lan=="中文"){
-        if(input$addc1=='European'){
-          output$text11 = renderPrint({
-            cat('初始时刻期权定价为：',option0(s0,k,r,sigma,N,maturity,type))
-          })
-        }
-        else if(input$addc1=='American'){
-          output$text11 = renderPrint({
-            cat('初始时刻期权定价为：',Aoption(s0,k,r,sigma,N,maturity,type))
-          })
-        }
+        output$text11 = renderPrint({
+          cat('初始时刻期权定价为：',option0(s0,k,r,sigma,N,maturity,type))
+        })
       }
       else{
-        if(input$addc1=='Europe'){
-          output$text11 = renderPrint({
-            cat('The date-0 option price is:',option0(s0,k,r,sigma,N,maturity,type))
-          })
-        }
-        else if(input$addc1=='America'){
-          output$text11 = renderPrint({
-            cat('The date-0 option price is:',Aoption(s0,k,r,sigma,N,maturity,type))
-          })
-        }
+        output$text11 = renderPrint({
+          cat('The date-0 option price is:',option0(s0,k,r,sigma,N,maturity,type))
+        })
       }
     }
   )
@@ -614,6 +644,89 @@ server=function(input,output,session){
       output$tb4_p2 = renderPrint({
         NULL
       })
+    }
+  )
+  
+  data_t5 = reactive({
+    req(input$tab5_f1)
+    read_excel(input$tab5_f1$datapath)
+  })
+  
+  observe({
+    req(data_t5())
+    updateSelectInput(session,"tab5_s1",choices = names(data_t5()))
+    updateSelectInput(session,"tab5_s2",choices = names(data_t5()))
+    updateSelectInput(session,"tab5_s3",choices = names(data_t5()))
+  })
+  
+  observeEvent(
+    input$tab5_a1,
+    {
+      output$tab5_ta1 = renderTable({data_t5()})
+    }
+  )
+  
+  observeEvent(
+    input$tab5_a1,
+    {
+      data = data_t5()
+      if(input$tab5_s4=="计数"){
+        name = paste(input$tab5_s2,"_cnt",sep = "")
+        res = data%>%
+          group_by(.data[[input$tab5_s1]],.data[[input$tab5_s2]])%>%
+          summarise(!!name := n(),.groups = "drop")%>%
+          pivot_wider(names_from = .data[[input$tab5_s2]], values_from = !!sym(name))
+      }
+      else if(input$tab5_s4=="去重计数"){
+        name = paste(input$tab5_s2,"_distinct_cnt",sep = "")
+        res = data%>%
+          group_by(.data[[input$tab5_s1]],.data[[input$tab5_s2]])%>%
+          summarise(!!name := n_distinct(.data[[input$tab5_s3]]),.groups = "drop")%>%
+          pivot_wider(names_from = .data[[input$tab5_s2]], values_from = !!sym(name))
+      }
+      else if(input$tab5_s4=="求和"){
+        name = paste(input$tab5_s2,"_求和",sep = "")
+        res = data%>%
+          group_by(.data[[input$tab5_s1]],.data[[input$tab5_s2]])%>%
+          summarise(!!name := sum(.data[[input$tab5_s3]]),.groups = "drop")%>%
+          pivot_wider(names_from = .data[[input$tab5_s2]], values_from = !!sym(name))
+      }
+      else if(input$tab5_s4=="平均"){
+        name = paste(input$tab5_s2,"_平均",sep = "")
+        res = data%>%
+          group_by(.data[[input$tab5_s1]],.data[[input$tab5_s2]])%>%
+          summarise(!!name := mean(.data[[input$tab5_s3]]),.groups = "drop")%>%
+          pivot_wider(names_from = .data[[input$tab5_s2]], values_from = !!sym(name))
+      }
+      else if(input$tab5_s4=="最大值"){
+        name = paste(input$tab5_s2,"_最大值",sep = "")
+        res = data%>%
+          group_by(.data[[input$tab5_s1]],.data[[input$tab5_s2]])%>%
+          summarise(!!name := max(.data[[input$tab5_s3]]),.groups = "drop")%>%
+          pivot_wider(names_from = .data[[input$tab5_s2]], values_from = !!sym(name))
+      }
+      else if(input$tab5_s4=="最小值"){
+        name = paste(input$tab5_s2,"_最小值",sep = "")
+        res = data%>%
+          group_by(.data[[input$tab5_s1]],.data[[input$tab5_s2]])%>%
+          summarise(!!name := min(.data[[input$tab5_s3]]),.groups = "drop")%>%
+          pivot_wider(names_from = .data[[input$tab5_s2]], values_from = !!sym(name))
+      }
+      output$tab5_dt1 = renderDT(
+        datatable(
+          data = res,
+          extensions = "Buttons",
+          options = list(
+            columnDefs = list(list(className="dt-center",targets = 1:length(colnames(res)))),
+            dom = "lfrtBip",
+            scrollX=T,
+            buttons = list(
+              list(extend="excel",text="Excel",filename="数据透视表"),
+              list(extend="copy",text="copy")
+            )
+          )
+        )
+      )
     }
   )
   
